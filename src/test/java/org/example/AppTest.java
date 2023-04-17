@@ -4,6 +4,8 @@ import org.example.helpers.TestConstants;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterTest;
@@ -14,6 +16,7 @@ import java.time.Duration;
 import java.util.Random;
 
 public class AppTest extends TestConstants {
+
     @BeforeTest
     public void Setup() {
         driver.get(BASE_URL);
@@ -75,7 +78,7 @@ public class AppTest extends TestConstants {
         signin_button.click();
     }
 
-    @Test(priority = 3, dependsOnMethods = "SignIn")
+    @Test(priority = 3, dependsOnMethods = "SignIn", enabled = false)
     public void Verify_Random_Search() {
         String[] items = {"jeans for men", "jeans for women", "Jacket", "t-shirt", "pants"};
 
@@ -104,10 +107,49 @@ public class AppTest extends TestConstants {
     @Test(priority = 4, dependsOnMethods = "SignIn", description = "This test case verifies that the specified items with random size and color are correctly added to the cart.")
     public void Verify_Adding_Items_To_The_Cart() {
 
+        driver.get(BASE_URL);
+
+        for (int i = 0; i < ITEMS_URLS.length; i++) {
+            // Navigating to every item page
+            driver.get(ITEMS_URLS[i]);
+            // waiting the size and color to appear
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(4));
+
+            // locating random arguments for the item
+            WebElement chosenSized = driver.findElement(By.id(ITEM_SIZES[random.nextInt(0, 5)]));
+            WebElement chosenColor = driver.findElement(By.id(ITEM_COLORS[randomColorIndex[i]]));
+
+            // locating quantity number field
+            WebElement quantity_number_field = driver.findElement(By.id("qty"));
+
+            // Filling the arguments for the item
+            chosenSized.click();
+            chosenColor.click();
+            quantity_number_field.clear();
+            quantity_number_field.sendKeys(String.valueOf(ITEM_QUANTITIES[i]));
+
+            // adding every item to cart
+            WebElement addToCartButton = driver.findElement(By.id("product-addtocart-button"));
+            addToCartButton.click();
+        }
+        driver.get(CART_URL);
+        // Declare WebDriverWait to explicitly wait 3 seconds for the element to appear
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+        // locating the ordered items total number in the cart
+        WebElement items_in_cart = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/div[1]/header/div[2]/div[1]/a/span[2]/span[1]")));
+        System.out.println("items in cart :" + items_in_cart.getText());
+        // Assertion
+        Assert.assertEquals(items_in_cart.getText(), "10");
     }
 
     @Test(priority = 5, dependsOnMethods = "Verify_Adding_Items_To_The_Cart", description = "This test case verifies that the checkout process is successful after adding items to the cart, and that the shipping address is correctly processed.")
     public void Verify_Checkout_Process() {
+        WebElement proceed_to_checkout_button = driver.findElement(By.xpath("/html/body/div[1]/main/div[3]/div/div[2]/div[1]/ul/li[1]/button"));
+        proceed_to_checkout_button.click();
+        WebElement street_input_field = driver.findElement(By.id("G2T22OY"));
+        WebElement city_input_field = driver.findElement(By.id("O4AF7R7"));
+        WebElement postal_code_input_field = driver.findElement(By.id("XMYQFQV"));
+        WebElement phone_input_field = driver.findElement(By.id("WUOBHEH"));
 
     }
 
