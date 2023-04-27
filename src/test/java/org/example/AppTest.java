@@ -5,12 +5,13 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.Select;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 
 import java.time.Duration;
 import java.util.Random;
@@ -76,6 +77,7 @@ public class AppTest extends TestConstants {
 
         // Logging In
         signin_button.click();
+        System.out.println("Logged In");
     }
 
     @Test(priority = 3, dependsOnMethods = "SignIn", enabled = false)
@@ -112,45 +114,79 @@ public class AppTest extends TestConstants {
         for (int i = 0; i < ITEMS_URLS.length; i++) {
             // Navigating to every item page
             driver.get(ITEMS_URLS[i]);
-            // waiting the size and color to appear
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(4));
 
-            // locating random arguments for the item
-            WebElement chosenSized = driver.findElement(By.id(ITEM_SIZES[random.nextInt(0, 5)]));
-            WebElement chosenColor = driver.findElement(By.id(ITEM_COLORS[randomColorIndex[i]]));
+            // Control statement to add only colors and sizes for the first 4 items because the last item only have quantity
+            if (i != 4) {
 
+                // waiting the size and color to appear
+                driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(4));
+
+                // locating random arguments for the item
+                WebElement chosenSized = driver.findElement(By.id(ITEM_SIZES[random.nextInt(0, 5)]));
+                WebElement chosenColor = driver.findElement(By.id(ITEM_COLORS[randomColorIndex[i]]));
+
+                // Filling the size and color for the item
+                chosenSized.click();
+                chosenColor.click();
+
+            }
             // locating quantity number field
             WebElement quantity_number_field = driver.findElement(By.id("qty"));
-
-            // Filling the arguments for the item
-            chosenSized.click();
-            chosenColor.click();
             quantity_number_field.clear();
             quantity_number_field.sendKeys(String.valueOf(ITEM_QUANTITIES[i]));
 
             // adding every item to cart
             WebElement addToCartButton = driver.findElement(By.id("product-addtocart-button"));
-            addToCartButton.click();
+            try {
+                addToCartButton.click();
+            } catch (Exception e) {
+                System.out.println("Error adding item " + (i + 1) + " to the cart: " + e.getMessage());
+            }
         }
         driver.get(CART_URL);
-        // Declare WebDriverWait to explicitly wait 3 seconds for the element to appear
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+
         // locating the ordered items total number in the cart
         WebElement items_in_cart = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/div[1]/header/div[2]/div[1]/a/span[2]/span[1]")));
         System.out.println("items in cart :" + items_in_cart.getText());
-        // Assertion
-        Assert.assertEquals(items_in_cart.getText(), "10");
+        // Assertion using SoftAssert
+        SoftAssert softAssert = new SoftAssert();
+        softAssert.assertEquals(items_in_cart.getText(), "10", "Number of items in cart is incorrect");
+        softAssert.assertAll();
     }
 
-    @Test(priority = 5, dependsOnMethods = "Verify_Adding_Items_To_The_Cart", description = "This test case verifies that the checkout process is successful after adding items to the cart, and that the shipping address is correctly processed.")
+    @Test(priority = 5, description = "This test case verifies that the checkout process is successful after adding items to the cart, and that the shipping address is correctly processed.")
     public void Verify_Checkout_Process() {
-        WebElement proceed_to_checkout_button = driver.findElement(By.xpath("/html/body/div[1]/main/div[3]/div/div[2]/div[1]/ul/li[1]/button"));
-        proceed_to_checkout_button.click();
-        WebElement street_input_field = driver.findElement(By.id("G2T22OY"));
-        WebElement city_input_field = driver.findElement(By.id("O4AF7R7"));
-        WebElement postal_code_input_field = driver.findElement(By.id("XMYQFQV"));
-        WebElement phone_input_field = driver.findElement(By.id("WUOBHEH"));
+        driver.get(CART_URL);
 
+        WebElement proceed_to_checkout_button = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("ul.checkout > li:nth-child(1) > button:nth-child(1)")));
+        proceed_to_checkout_button.click();
+
+        // Locating Required Shipping Details input fields
+        // Note: First and Last name will be added by default from the account details
+        // Note: the input IDs change everytime we try to locate them
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("country_id")));
+        Select country_select_input_field = new Select(driver.findElement(By.name("country_id")));
+        WebElement city_input_field = driver.findElement(By.name("city"));
+        WebElement postal_code_input_field = driver.findElement(By.name("postcode"));
+        WebElement phone_input_field = driver.findElement(By.name("telephone"));
+        WebElement street = driver.findElement(By.name("street[0]"));
+
+        country_select_input_field.selectByVisibleText(CUSTOMER_COUNTRY);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("region_id")));
+        Select state_select_input_field = new Select(driver.findElement(By.name("region_id")));
+        state_select_input_field.selectByVisibleText(CUSTOMER_STATE);
+
+        street.sendKeys(CUSTOMER_STREET);
+        city_input_field.sendKeys(CUSTOMER_CITY);
+        postal_code_input_field.sendKeys(CUSTOMER_POSTAL_CODE);
+        phone_input_field.sendKeys(CUSTOMER_PHONE);
+        wait.until(ExpectedConditions.attributeToBe(By.className("radio"), "checked", "true"));
+        wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("#shipping-method-buttons-container > div > button")));
+        WebElement next_button = driver.findElement(By.cssSelector("#shipping-method-buttons-container > div > button"));
+        next_button.click();
+
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='Place Order']")));
+        Assert.assertEquals(driver.getCurrentUrl(), "https://magento.softwaretestingboard.com/checkout/#payment");
     }
 
     @Test(priority = 6, dependsOnMethods = "Verify_Checkout_Process", description = "This test case verifies that the final price displayed on the order confirmation page is correct after clicking the 'Place Order' button.")

@@ -2,11 +2,14 @@ package org.example.helpers;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
 import java.util.Random;
 
 public class TestConstants {
     protected WebDriver driver = new EdgeDriver();
+    protected WebDriverWait wait = new WebDriverWait(driver, Duration.ofMinutes(2));
     protected static String BASE_URL = "https://magento.softwaretestingboard.com";
     protected static String SIGNUP_URL = "https://magento.softwaretestingboard.com/customer/account/create/";
     protected static String SIGNIN_URL = "https://magento.softwaretestingboard.com/customer/account/login/referer/aHR0cHM6Ly9tYWdlbnRvLnNvZnR3YXJldGVzdGluZ2JvYXJkLmNvbS8%2C/";
@@ -19,16 +22,16 @@ public class TestConstants {
     protected static String CUSTOMER_STREET = "John West Way";
     protected static String CUSTOMER_CITY = "Aurora";
     protected static String CUSTOMER_STATE = "Ontario";
-    protected static String CUSTOMER_POSTAL_CODE = "905";
+    protected static String CUSTOMER_POSTAL_CODE = "A1B2C3";
     protected static String CUSTOMER_COUNTRY = "Canada";
     protected static String CUSTOMER_PHONE = "0123456789";
     protected Random random = new Random();
     protected static String[] ITEMS_URLS = {
-            "https://magento.softwaretestingboard.com/radiant-tee.html",
-            "https://magento.softwaretestingboard.com/breathe-easy-tank.html",
-            "https://magento.softwaretestingboard.com/argus-all-weather-tank.html",
-            "https://magento.softwaretestingboard.com/hero-hoodie.html",
-//            "https://magento.softwaretestingboard.com/fusion-backpack.html"
+            "https://magento.softwaretestingboard.com/radiant-tee.html",            // 0
+            "https://magento.softwaretestingboard.com/breathe-easy-tank.html",      // 1
+            "https://magento.softwaretestingboard.com/argus-all-weather-tank.html", // 2
+            "https://magento.softwaretestingboard.com/hero-hoodie.html",            // 3
+            "https://magento.softwaretestingboard.com/fusion-backpack.html"         // 4
     };
     protected static String[] ITEM_SIZES = {
             "option-label-size-143-item-166", // xs
@@ -57,7 +60,7 @@ public class TestConstants {
             5,
             random.nextInt(6, 9),
     };
-    protected static int[] ITEM_QUANTITIES = {3, 2, 4, 1};
+    protected static int[] ITEM_QUANTITIES = {3, 2, 4, 1, 5};
 
 
 }
