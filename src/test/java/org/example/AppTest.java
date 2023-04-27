@@ -154,7 +154,7 @@ public class AppTest extends TestConstants {
         softAssert.assertAll();
     }
 
-    @Test(priority = 5, description = "This test case verifies that the checkout process is successful after adding items to the cart, and that the shipping address is correctly processed.")
+    @Test(priority = 5, dependsOnMethods = "Verify_Adding_Items_To_The_Cart", description = "This test case verifies that the checkout process is successful after adding items to the cart, and that the shipping address is correctly processed.")
     public void Verify_Checkout_Process() {
         driver.get(CART_URL);
 
